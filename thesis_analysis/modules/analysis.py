@@ -8,20 +8,15 @@ def calculate_centrality(G):
     """
     print("Calculating centrality metrics...")
     
-    # Degree Centrality
     degree = nx.degree_centrality(G)
     
-    # Weighted Degree (Strength)
     strength = dict(G.degree(weight='weight'))
     
-    # Betweenness Centrality (can be slow for large graphs, maybe limit k)
-    # Using k=None for full calculation, but consider k=100 for approximation on large graphs
+
     betweenness = nx.betweenness_centrality(G, weight='weight')
     
-    # Closeness Centrality
     closeness = nx.closeness_centrality(G)
     
-    # Eigenvector Centrality
     try:
         eigenvector = nx.eigenvector_centrality(G, weight='weight', max_iter=1000)
     except nx.PowerIterationFailedConvergence:

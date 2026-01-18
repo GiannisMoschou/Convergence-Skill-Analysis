@@ -22,8 +22,6 @@ def build_temporal_networks(df, date_col='upload_date', interval='M'):
         
     temporal_networks = {}
     
-    # Group by time interval
-    # Using Grouper for flexible time frequency
     grouped = df.groupby(pd.Grouper(key=date_col, freq=interval))
     
     # 1. First pass: Determine minimum count across all valid intervals
@@ -165,23 +163,33 @@ def calculate_convergence_metrics(temporal_networks):
             deg1 = nx.degree_centrality(G1)
             deg2 = nx.degree_centrality(G2)
             
-            vec1 = [deg1[n] for n in common_nodes]
-            vec2 = [deg2[n] for n in common_nodes]
+            bet1 = nx.betweenness_centrality(G1, weight='weight')
+            bet2 = nx.betweenness_centrality(G2, weight='weight')
+            
+            vec_deg1 = [deg1[n] for n in common_nodes]
+            vec_deg2 = [deg2[n] for n in common_nodes]
+            
+            vec_bet1 = [bet1[n] for n in common_nodes]
+            vec_bet2 = [bet2[n] for n in common_nodes]
             
             # Spearman correlation
             from scipy.stats import spearmanr
-            corr, _ = spearmanr(vec1, vec2)
+            corr_deg, _ = spearmanr(vec_deg1, vec_deg2)
+            corr_bet, _ = spearmanr(vec_bet1, vec_bet2)
             
             # Handle NaN if constant input
-            if pd.isna(corr):
-                corr = 0
+            if pd.isna(corr_deg): corr_deg = 0
+            if pd.isna(corr_bet): corr_bet = 0
+            
         else:
-            corr = 0
+            corr_deg = 0
+            corr_bet = 0
             
         convergence_data.append({
             'period': t2, # Plot against the "next" period
             'jaccard_similarity': jaccard,
-            'rank_correlation': corr,
+            'rank_correlation_degree': corr_deg,
+            'rank_correlation_betweenness': corr_bet,
             'common_skills_count': len(common_nodes)
         })
         

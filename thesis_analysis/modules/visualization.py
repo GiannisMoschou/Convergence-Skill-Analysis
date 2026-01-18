@@ -30,6 +30,114 @@ def plot_network(G, output_path, title="Skill Network"):
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
 
+def plot_filtered_network(G, output_path, title="Core Skill Network", k_core=None, min_weight=None, top_n=None):
+    """
+    Plots a filtered version of the network to reduce clutter (The 'Hairball' problem).
+    Supports K-Core, Min Weight, and Top-N filtering.
+    """
+    print(f"Plotting filtered network to {output_path}...")
+    
+    H = G.copy()
+    
+    # Filter 1: K-Core (Keep only nodes connected to k other nodes)
+    if k_core:
+        print(f"  Applying k-core decomposition (k={k_core})...")
+        H = nx.k_core(H, k=k_core)
+        
+    # Filter 2: Min Weight (Keep only strong edges)
+    if min_weight:
+        print(f"  Filtering edges with weight < {min_weight}...")
+        edges_to_remove = [(u, v) for u, v, d in H.edges(data=True) if d.get('weight', 0) < min_weight]
+        H.remove_edges_from(edges_to_remove)
+        
+    # Filter 3: Top N Nodes (by weighted degree)
+    if top_n:
+        print(f"  Keeping top {top_n} nodes by centrality...")
+        # Sort by weighted degree
+        node_degrees = dict(H.degree(weight='weight'))
+        top_nodes = sorted(node_degrees, key=node_degrees.get, reverse=True)[:top_n]
+        H = H.subgraph(top_nodes).copy()
+        
+    # Remove isolated nodes after filtering
+    H.remove_nodes_from(list(nx.isolates(H)))
+        
+    if H.number_of_nodes() == 0:
+        print("  Warning: Filtering removed all nodes. Skipping plot.")
+        return
+
+    if H.number_of_nodes() == 0:
+        print("  Warning: Filtering removed all nodes. Skipping plot.")
+        return
+
+    # Increase canvas size for better readability
+    plt.figure(figsize=(20, 20))
+    # Increase k (optimal distance) to spread nodes apart
+    pos = nx.spring_layout(H, k=0.5, iterations=50, seed=42)
+    
+    # Scale node size: normalization to avoid huge blobs
+    # Base size 100, plus scaled frequency
+    degrees = [H.degree(n, weight='weight') for n in H.nodes()]
+    max_deg = max(degrees) if degrees else 1
+    node_sizes = [300 + (d / max_deg) * 2000 for d in degrees]
+    
+    nx.draw_networkx_nodes(H, pos, node_size=node_sizes, node_color='#66b3ff', alpha=0.9, edgecolors='white')
+    nx.draw_networkx_edges(H, pos, alpha=0.15, edge_color='#555555')
+    
+    # Add labels with white background for readability
+    bbox_props = dict(boxstyle="round,pad=0.3", fc="white", ec="none", alpha=0.8)
+    nx.draw_networkx_labels(H, pos, font_size=10, font_family='sans-serif', bbox=bbox_props)
+    
+    
+    plt.title(f"{title}\n(Nodes: {H.number_of_nodes()}, Edges: {H.number_of_edges()})")
+    plt.axis('off')
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close()
+
+def plot_mst_network(G, output_path, title="Maximum Spanning Tree (Backbone)", top_n=None):
+    """
+    Plots the Maximum Spanning Tree of the graph.
+    This reveals the 'skeleton' or strongest paths between skills, ensuring no cycles.
+    """
+    print(f"Plotting MST to {output_path}...")
+    
+    H = G.copy()
+    
+    # Filter if top_n is requested
+    if top_n:
+        print(f"  Filtering MST input to Top {top_n} skills...")
+        node_degrees = dict(H.degree(weight='weight'))
+        top_nodes = sorted(node_degrees, key=node_degrees.get, reverse=True)[:top_n]
+        H = H.subgraph(top_nodes).copy()
+        title = f"{title} (Top {top_n} Skills)"
+
+    # Calculate Maximum Spanning Tree (keeps strongest edges)
+    T = nx.maximum_spanning_tree(H, weight='weight')
+    
+    plt.figure(figsize=(14, 14))
+    
+    # MST looks usually better with Kamada Kawai or just Spring
+    pos = nx.spring_layout(T, k=0.5, iterations=50)
+    
+    # Node Size
+    node_degrees = dict(G.degree(weight='weight')) # Use original graph degree for sizing to show importance
+    node_sizes = [node_degrees.get(n, 1) * 0.5 for n in T.nodes()]
+    
+    # Edge Width by weight
+    edge_weights = [T[u][v]['weight'] for u, v in T.edges()]
+    # Normalize roughly
+    max_w = max(edge_weights) if edge_weights else 1
+    width = [ (w / max_w) * 3 for w in edge_weights]
+    
+    nx.draw_networkx_nodes(T, pos, node_size=node_sizes, node_color='#ffcc99', alpha=0.9)
+    nx.draw_networkx_edges(T, pos, width=width, alpha=0.5, edge_color='#666666')
+    nx.draw_networkx_labels(T, pos, font_size=9)
+    
+    plt.title(title)
+    plt.axis('off')
+    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.close()
+
+
 def plot_centrality_distribution(centrality_df, output_dir):
     """
     Plots histograms of centrality measures.
@@ -107,10 +215,14 @@ def plot_convergence_metrics(convergence_df, output_dir):
 
     # Plot Rank Correlation
     plt.figure(figsize=(12, 6))
-    sns.lineplot(data=convergence_df, x='period', y='rank_correlation', marker='o', color='purple')
+    sns.lineplot(data=convergence_df, x='period', y='rank_correlation_degree', marker='o', label='Degree Centrality', color='purple')
+    if 'rank_correlation_betweenness' in convergence_df.columns:
+        sns.lineplot(data=convergence_df, x='period', y='rank_correlation_betweenness', marker='s', label='Betweenness Centrality', color='orange')
+    
     plt.title('Skill Ranking Stability (Spearman Correlation) over Time')
     plt.ylabel('Rank Correlation (-1 to 1)')
     plt.xlabel('Period')
+    plt.legend()
     plt.xticks(rotation=45)
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, 'convergence_correlation.png'), dpi=300)

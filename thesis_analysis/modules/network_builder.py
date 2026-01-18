@@ -16,14 +16,11 @@ def build_cooccurrence_matrix(df, min_weight=1):
         # Sort skills to ensure (A, B) is same as (B, A)
         sorted_skills = sorted(skills)
         
-        # Update individual skill counts
         skill_counts.update(sorted_skills)
         
-        # Generate pairs
         for pair in combinations(sorted_skills, 2):
             pair_counts[pair] += 1
 
-    # Convert to DataFrame
     co_occurrence_data = []
     for (skill_i, skill_j), weight in pair_counts.items():
         if weight >= min_weight:
@@ -35,7 +32,6 @@ def build_cooccurrence_matrix(df, min_weight=1):
             
     co_occurrence_df = pd.DataFrame(co_occurrence_data)
     
-    # Create skills metadata DataFrame
     skills_df = pd.DataFrame.from_dict(skill_counts, orient='index', columns=['frequency']).reset_index()
     skills_df.rename(columns={'index': 'skill'}, inplace=True)
     
@@ -49,13 +45,12 @@ def build_graph(co_occurrence_df, skills_df):
     print("Building NetworkX graph...")
     G = nx.Graph()
     
-    # Add nodes with attributes
     for _, row in skills_df.iterrows():
         G.add_node(row['skill'], frequency=row['frequency'])
         
-    # Add edges
     for _, row in co_occurrence_df.iterrows():
         G.add_edge(row['skill_i'], row['skill_j'], weight=row['weight'])
         
     print(f"Graph built with {G.number_of_nodes()} nodes and {G.number_of_edges()} edges.")
     return G
+

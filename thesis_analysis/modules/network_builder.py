@@ -13,7 +13,6 @@ def build_cooccurrence_matrix(df, min_weight=1):
     skill_counts = Counter()
 
     for skills in df['skills_list']:
-        # Sort skills to ensure (A, B) is same as (B, A)
         sorted_skills = sorted(skills)
         
         skill_counts.update(sorted_skills)

@@ -52,7 +52,6 @@ def build_temporal_networks(df, date_col='upload_date', interval='M'):
             
         print(f"Processing period: {period_str} (Jobs: {len(sampled_group)} - original: {len(group)})")
         
-        # Build network for this slice
         co_occurrence_df, skills_df = network_builder.build_cooccurrence_matrix(sampled_group, min_weight=1)
         
         if co_occurrence_df.empty:
@@ -81,13 +80,10 @@ def calculate_temporal_metrics(temporal_networks):
     node_metrics_list = []
     
     for period, G in temporal_networks.items():
-        # Global Stats
         stats = analysis.global_network_stats(G)
         stats['period'] = period
         global_metrics_list.append(stats)
         
-        # Node Stats (Centrality)
-        # We focus on Degree and Betweenness as per papers
         degree = nx.degree_centrality(G)
         betweenness = nx.betweenness_centrality(G, weight='weight')
         
@@ -109,11 +105,8 @@ def detect_emerging_skills(node_df, top_n=10):
     """
     Identifies skills with the highest growth in centrality.
     """
-    # Pivot to get skills as columns
     pivot_df = node_df.pivot(index='period', columns='skill', values='degree_centrality').fillna(0)
     
-    # Calculate difference between last and first period (or trend slope)
-    # Simple approach: Last - First
     if len(pivot_df) < 2:
         return pd.DataFrame()
         

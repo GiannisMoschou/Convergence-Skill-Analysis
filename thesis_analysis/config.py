@@ -4,8 +4,6 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(os.path.dirname(BASE_DIR), "") # Parent dir where csv is
 OUTPUT_DIR = os.path.join(BASE_DIR, "output")
-OUTPUT_DIR_CSV = os.path.join(OUTPUT_DIR, "csvs")
-OUTPUT_DIR_IMG = os.path.join(OUTPUT_DIR, "pngs")
 INPUT_FILE = os.path.join(DATA_DIR, "jobs_monthly_2020_2025.csv")
 MAPPING_FILE = os.path.join(DATA_DIR, "ESCO_skiils_mapping.csv")
 

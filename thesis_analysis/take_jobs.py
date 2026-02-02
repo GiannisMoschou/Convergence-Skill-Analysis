@@ -61,18 +61,21 @@ while current < end_date:
     collected = 0
     page = 1
     interval_jobs = []
+    seen_ids = set() # Track IDs for this interval to prevent duplicates
 
     while collected < jobs_per_interval:
+        query_params = {
+            "page": str(page),
+            "page_size": "100"
+        }
         form_data = {
             "sources": "OJA",
-            "page": str(page),
-            "page_size": "100",
             "min_upload_date": interval_start,
             "max_upload_date": interval_end_str
         }
         print(f"  Fetching page {page} (collected: {collected})...")
         try:
-            response = session.post(f"{API}/jobs", headers=headers, data=form_data, verify=False, timeout=30)
+            response = session.post(f"{API}/jobs", headers=headers, data=form_data, params=query_params, verify=False, timeout=30)
         except Exception as e:
             print(f"  Request error after retries: {e}")
             break
@@ -84,8 +87,22 @@ while current < end_date:
         items = data.get("items", [])
         if not items:
             break
-        interval_jobs.extend(items)
+        
+        new_items = []
+        for item in items:
+            job_id = item.get('id')
+            if job_id and job_id not in seen_ids:
+                seen_ids.add(job_id)
+                new_items.append(item)
+        
+        if not new_items:
+            print(f"  Warning: No new unique items found on page {page}. Stopping interval.")
+            break
+            
+        interval_jobs.extend(new_items)
         collected = len(interval_jobs)
+        
+        # If we got fewer items than requested, we likely hit the end
         if len(items) < 100:
             break
         page += 1

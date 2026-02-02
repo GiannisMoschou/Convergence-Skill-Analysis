@@ -1,0 +1,6 @@
+Total Job Postings: 126000
+nodes: 1449
+edges: 54978
+density: 0.0524061173832973
+average_clustering: 0.0015910972869839226
+connected_components: 413

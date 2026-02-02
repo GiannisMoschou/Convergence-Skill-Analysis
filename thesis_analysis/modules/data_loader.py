@@ -32,13 +32,11 @@ def load_and_clean_data(filepath):
 
     df = df[df['skills_list'].map(len) > 0]
 
-    # Load Mapping `ESCO_skiils_mapping.csv` 
+    # Mapping of the skill URIs to their names 
     if os.path.exists(config.MAPPING_FILE):
         print(f"Loading skill mapping from {config.MAPPING_FILE}...")
         try:
             # Load only first two columns: conceptUri, preferredLabel
-            # Try utf-8 first, then fallback to latin-1/cp1252 if needed.
-            # Given the error 0xa0, it's likely latin-1 or similar.
             try:
                 mapping_df = pd.read_csv(config.MAPPING_FILE, sep=';', usecols=[0, 1])
             except UnicodeDecodeError:
@@ -65,9 +63,7 @@ def load_and_clean_data(filepath):
 
     print(f"Loaded {len(df)} jobs with valid skills.")
     
-    # Filter to keep only relevant columns
     cols_to_keep = ['skills_list', 'upload_date']
-    # Ensure columns exist before selecting to avoid KeyErrors if something went wrong upstream
     cols_to_keep = [c for c in cols_to_keep if c in df.columns]
     df = df[cols_to_keep]
     

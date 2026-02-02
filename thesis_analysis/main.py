@@ -10,8 +10,6 @@ def main():
     print("Starting Skill Network Analysis Pipeline...")
     
     os.makedirs(config.OUTPUT_DIR, exist_ok=True)
-    os.makedirs(config.OUTPUT_DIR_CSV, exist_ok=True)
-    os.makedirs(config.OUTPUT_DIR_IMG, exist_ok=True)
     
     # Load Data
     df = data_loader.load_and_clean_data(config.INPUT_FILE)

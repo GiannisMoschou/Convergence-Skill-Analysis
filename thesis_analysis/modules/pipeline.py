@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from thesis_analysis import config
-from thesis_analysis.modules import network_builder, analysis, association_rules, visualization, temporal
+from thesis_analysis.modules import network_builder, analysis, visualization, temporal
 
 def static_analysis(df):
     """
@@ -100,7 +100,6 @@ def temporal_analysis(df):
     
     # Visualization (Temporal)
     visualization.plot_metric_trends(global_stats_df, temporal_img_dir)
-    visualization.plot_skill_heatmap(node_stats_df, temporal_img_dir, top_n=50)
     
     # Plot trajectories for top emerging skills
     if not emerging_skills.empty:
